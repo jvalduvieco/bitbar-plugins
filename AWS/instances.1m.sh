@@ -29,28 +29,32 @@ AWS_CLI_PROFILE="default"
 MENU_BAR_PREFIX_LABEL="EC2: "
 
 # InService output color (default green)
-IN_SERVICE_COLOR="#29cc00"
+INSTANCE_COLOR="#29cc00"
 
 # OutOfService output color (default red)
-OUT_SERVICE_COLOR="#ff0033"
+REGION_COLOR="#ff0033"
 
 ## Implementation (changes optional, not required)
-
+regions="eu-west-1 eu-central-1"
+#zones=$(aws ec2 describe-regions --output text | cut -f3)
 # Fetch list of instances
-for region in $(aws ec2 describe-regions --output text | cut -f3)
+for region in ${regions}
 do
     number_of_running_instances=$(aws --profile ${AWS_CLI_PROFILE} ec2 describe-instances --region ${region} --filters 'Name=instance-state-code,Values=16'| jq '.Reservations[].Instances | length')
  	[[ -z ${number_of_running_instances} ]] && number_of_running_instances=0
- 	instances=$(aws --profile $AWS_CLI_PROFILE ec2 describe-instances --region ${region} --filters 'Name=instance-state-code,Values=16'|jq -r '.Reservations[].Instances[]| .PublicDnsName')
  	total_number_of_running_instances=$((${total_number_of_running_instances} + ${number_of_running_instances}))
- 	total_instances+="${instances[@]}"
 done
 
-
-# Output
 echo "$MENU_BAR_PREFIX_LABEL $total_number_of_running_instances"
 echo "---"
-for instance in $total_instances
+for region in ${regions}
 do
-	echo "${instance} | color=$IN_SERVICE_COLOR"
+ 	instances=$(aws --profile $AWS_CLI_PROFILE ec2 describe-instances --region ${region} --filters 'Name=instance-state-code,Values=16'|jq -r '.Reservations[].Instances[]| .PublicDnsName')
+ 	[[ ! -z ${instances} ]] && echo "${region} | color=$REGION_COLOR"
+ 	for instance in ${instances}
+	do
+		echo "${instance} | color=$INSTANCE_COLOR"
+		echo "--Copy IP to clipboard | bash=\"echo ${instance} | pbcopy\" terminal=false"
+	done
 done
+echo "Refresh | refresh=true"
