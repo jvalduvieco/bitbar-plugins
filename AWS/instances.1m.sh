@@ -21,7 +21,7 @@ export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 ## Required Configuration (must provide your own settings here)
 
 # AWS CLI credential profile
-AWS_CLI_PROFILE="default"
+AWS_CLI_PROFILE="eb-cli"
 
 ## Optional Configuration (not required)
 
@@ -40,11 +40,8 @@ OUT_SERVICE_COLOR="#ff0033"
 number_of_running_instances=$(aws --profile $AWS_CLI_PROFILE ec2 describe-instances --filters 'Name=instance-state-code,Values=16'| jq '.Reservations[].Instances | length')
 instances=$(aws --profile $AWS_CLI_PROFILE ec2 describe-instances --filters 'Name=instance-state-code,Values=16'|jq -r '.Reservations[].Instances[]| .PublicDnsName')
 
-# Total number of lines fetched
-total=${#instances[@]}
-
 # Output
-echo "$MENU_BAR_PREFIX_LABEL $total"
+echo "$MENU_BAR_PREFIX_LABEL $number_of_running_instances"
 echo "---"
 for instance in $instances
 do
